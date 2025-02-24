@@ -92,6 +92,8 @@ type DockerConfiguration struct {
 		Type   string            `default:"local" json:"type" yaml:"type"`
 		Config map[string]string `default:"{\"max-size\":\"5m\",\"max-file\":\"1\",\"compress\":\"false\",\"mode\":\"non-blocking\"}" json:"config" yaml:"config"`
 	} `json:"log_config" yaml:"log_config"`
+
+	LogFilters []string `json:"log_filters" yaml:"log_filters"`
 }
 
 func (c DockerConfiguration) ContainerLogConfig() container.LogConfig {

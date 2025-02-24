@@ -87,6 +87,12 @@ func (e *Environment) Attach(ctx context.Context) error {
 		}()
 
 		if err := system.ScanReader(e.stream.Reader, func(v []byte) {
+			line := string(v)
+
+			if e.shouldFilterLog(line) {
+				return
+			}
+
 			e.logCallbackMx.Lock()
 			defer e.logCallbackMx.Unlock()
 			e.logCallback(v)
@@ -257,7 +263,7 @@ func (e *Environment) Create() error {
 		},
 		NetworkMode: networkMode,
 		UsernsMode:  container.UsernsMode(cfg.Docker.UsernsMode),
-		
+
 		ExtraHosts: []string{"host.docker.internal:host-gateway"},
 	}
 
@@ -333,7 +339,13 @@ func (e *Environment) Readlog(lines int) ([]string, error) {
 	var out []string
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		out = append(out, scanner.Text())
+		line := scanner.Text()
+
+		if e.shouldFilterLog(line) {
+			continue
+		}
+
+		out = append(out, line)
 	}
 
 	return out, nil

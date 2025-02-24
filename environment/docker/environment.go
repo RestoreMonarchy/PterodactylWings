@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 
 	"emperror.dev/errors"
@@ -11,6 +12,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 
+	"github.com/pterodactyl/wings/config"
 	"github.com/pterodactyl/wings/environment"
 	"github.com/pterodactyl/wings/events"
 	"github.com/pterodactyl/wings/remote"
@@ -217,4 +219,23 @@ func (e *Environment) SetLogCallback(f func([]byte)) {
 	defer e.logCallbackMx.Unlock()
 
 	e.logCallback = f
+}
+
+func (e *Environment) shouldFilterLog(line string) bool {
+	// Get the log filters from configuration
+	filters := config.Get().Docker.LogFilters
+
+	// If no filters are configured, don't filter anything
+	if len(filters) == 0 {
+		return false
+	}
+
+	// Check if the line starts with any of the filter prefixes
+	for _, filter := range filters {
+		if strings.HasPrefix(line, filter) {
+			return true
+		}
+	}
+
+	return false
 }
